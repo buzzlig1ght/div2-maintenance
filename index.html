@@ -12,7 +12,9 @@
     </div>
 
     <script>
-        fetch('status.json').then(r => r.json()).then(data => {
+        fetch('./status.json?t=' + new Date().getTime())
+    .then(r => r.json())
+    .then(data => {
             document.getElementById('maint-title').innerText = data.title;
             document.getElementById('maint-link').innerHTML = `<a href="${data.url}" style="color: #ffd700">View Source Post</a>`;
         });
