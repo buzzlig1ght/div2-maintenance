@@ -1,51 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Division 2 NSW Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHD Status Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #ff6600; text-align: center; padding: 50px; }
-        .maint-box { border: 2px solid #ff6600; padding: 20px; border-radius: 10px; background: #111; display: inline-block; min-width: 300px; }
-        .time { font-size: 24px; color: #fff; margin: 15px 0; font-weight: bold; }
-        .footer-link { color: #888; text-decoration: none; font-size: 12px; margin-top: 20px; display: block; }
+        :root { --shd-orange: #ff6600; --shd-green: #00ff88; --bg: #0a0a0b; }
+        body { background: var(--bg); color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .card { border-left: 4px solid var(--shd-orange); background: #15171a; padding: 25px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .status-light { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        .online { background: var(--shd-green); box-shadow: 0 0 10px var(--shd-green); }
+        .maint { background: var(--shd-orange); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .timer { font-size: 2.5rem; font-weight: bold; margin: 15px 0; font-family: monospace; }
+        .info { color: #888; font-size: 0.8rem; margin-bottom: 5px; }
+        a { color: var(--shd-orange); text-decoration: none; border: 1px solid var(--shd-orange); padding: 5px 10px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
-    <h1>SHD MAINTENANCE TRACKER</h1>
-    <div class="maint-box">
-        <div id="title">Scanning for Intel...</div>
-        <div class="time" id="local-time">--:--</div>
-        <div id="link"></div>
+    <div class="card">
+        <div style="margin-bottom: 15px;">
+            <span id="light" class="status-light"></span>
+            <span id="status-text" style="font-size: 0.9rem;">Connecting...</span>
+        </div>
+        <div id="title" style="color: var(--shd-orange); font-weight: bold; margin-bottom: 20px;">Scanning SHD Network...</div>
+        <div class="timer" id="countdown">00:00:00</div>
+        <div class="info" id="local-start"></div>
+        <div class="info" id="local-end" style="margin-bottom: 20px;"></div>
+        <div id="link-container"></div>
     </div>
 
     <script>
-        fetch('./status.json?t=' + Date.now())
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById('title').innerText = data.title;
-            
-            if(data.utc_start) {
-                // The browser now reads "2025-12-19T08:30:00Z" perfectly
-                const start = new Date(data.utc_start);
+        const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        function update() {
+            fetch('./status.json?t=' + Date.now()).then(r => r.json()).then(data => {
+                const now = new Date(), start = new Date(data.utc_start), end = new Date(data.utc_end);
+                document.getElementById('title').innerText = data.title;
                 
-                const options = { 
-                    timeZone: 'Australia/Sydney',
-                    weekday: 'long', 
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true
-                };
-                
-                const localStr = start.toLocaleString('en-AU', options);
-                document.getElementById('local-time').innerText = "NSW Australia: " + localStr;
-            } else {
-                document.getElementById('local-time').innerText = "No Maintenance Scheduled";
-            }
-            
-            document.getElementById('link').innerHTML = `<a href="${data.url}" target="_blank" style="color: #ff6600;">View Official Post</a>`;
-        });
+                if (!data.utc_start || now > end) {
+                    document.getElementById('light').className = "status-light online";
+                    document.getElementById('status-text').innerText = "Systems Online";
+                    document.getElementById('countdown').innerText = "00:00:00";
+                } else {
+                    const target = now < start ? start : end;
+                    document.getElementById('status-text').innerText = now < start ? "Upcoming Maint" : "Maint In Progress";
+                    document.getElementById('light').className = now < start ? "status-light" : "status-light maint";
+                    
+                    setInterval(() => {
+                        const diff = target - new Date();
+                        if (diff < 0) return location.reload();
+                        const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+                        document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    }, 1000);
+                }
+
+                if (data.utc_start) {
+                    const fmt = { timeZone: userTZ, hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' };
+                    document.getElementById('local-start').innerText = `Start: ${start.toLocaleString(undefined, fmt)} (${userTZ})`;
+                    document.getElementById('local-end').innerText = `End: ${end.toLocaleString(undefined, fmt)}`;
+                    document.getElementById('link-container').innerHTML = `<a href="${data.url}" target="_blank">Intel Link</a>`;
+                }
+            });
+        }
+        update();
     </script>
-    <a href="https://www.reddit.com/r/thedivision/new/" class="footer-link">Manual Agent Backup (Reddit)</a>
 </body>
 </html>
