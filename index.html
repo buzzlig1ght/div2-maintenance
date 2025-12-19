@@ -19,26 +19,32 @@
 
     <script>
         fetch('./status.json?t=' + Date.now())
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('title').innerText = data.title;
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('title').innerText = data.title;
+            
+            if(data.utc_start) {
+                // The browser now reads "2025-12-19T08:30:00Z" perfectly
+                const start = new Date(data.utc_start);
                 
-                if(data.utc_start) {
-                    const start = new Date(data.utc_start);
-                    // This automatically converts to Australia/Sydney time
-                    const options = { 
-                        timeZone: 'Australia/Sydney',
-                        weekday: 'long', 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        day: 'numeric',
-                        month: 'short'
-                    };
-                    document.getElementById('local-time').innerText = "NSW: " + start.toLocaleString('en-AU', options);
-                }
+                const options = { 
+                    timeZone: 'Australia/Sydney',
+                    weekday: 'long', 
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true
+                };
                 
-                document.getElementById('link').innerHTML = `<a href="${data.url}" target="_blank" style="color: #ff6600;">Source Intel</a>`;
-            });
+                const localStr = start.toLocaleString('en-AU', options);
+                document.getElementById('local-time').innerText = "NSW Australia: " + localStr;
+            } else {
+                document.getElementById('local-time').innerText = "No Maintenance Scheduled";
+            }
+            
+            document.getElementById('link').innerHTML = `<a href="${data.url}" target="_blank" style="color: #ff6600;">View Official Post</a>`;
+        });
     </script>
     <a href="https://www.reddit.com/r/thedivision/new/" class="footer-link">Manual Agent Backup (Reddit)</a>
 </body>
