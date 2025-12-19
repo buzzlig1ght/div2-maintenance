@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Div 2 NSW Maintenance</title>
+    <style>body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 50px; }</style>
+</head>
+<body>
+    <h1>Division 2 Maintenance (NSW Time)</h1>
+    <div id="box" style="border: 2px solid #ffd700; padding: 20px; display: inline-block;">
+        <h2 id="maint-title">Loading latest info...</h2>
+        <p id="maint-link"></p>
+    </div>
+
+    <script>
+        fetch('status.json').then(r => r.json()).then(data => {
+            document.getElementById('maint-title').innerText = data.title;
+            document.getElementById('maint-link').innerHTML = `<a href="${data.url}" style="color: #ffd700">View Source Post</a>`;
+        });
+    </script>
+</body>
+</html>
