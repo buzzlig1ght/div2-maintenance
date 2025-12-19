@@ -1,28 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Div 2 NSW Maintenance</title>
-    <style>body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 50px; }</style>
+    <title>Division 2 NSW Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #ff6600; text-align: center; padding: 50px; }
+        .maint-box { border: 2px solid #ff6600; padding: 20px; border-radius: 10px; background: #111; display: inline-block; min-width: 300px; }
+        .time { font-size: 24px; color: #fff; margin: 15px 0; font-weight: bold; }
+        .footer-link { color: #888; text-decoration: none; font-size: 12px; margin-top: 20px; display: block; }
+    </style>
 </head>
 <body>
-    <h1>Division 2 Maintenance (NSW Time)</h1>
-    <div id="box" style="border: 2px solid #ffd700; padding: 20px; display: inline-block;">
-        <h2 id="maint-title">Loading latest info...</h2>
-        <p id="maint-link"></p>
+    <h1>SHD MAINTENANCE TRACKER</h1>
+    <div class="maint-box">
+        <div id="title">Scanning for Intel...</div>
+        <div class="time" id="local-time">--:--</div>
+        <div id="link"></div>
     </div>
-    <hr style="border: 0; border-top: 1px solid #444; margin: 20px 0;">
-<p>Backup Intel:</p>
-<a href="https://www.reddit.com/r/thedivision/new/" target="_blank" 
-   style="background: #ff6600; color: black; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block;">
-   Check Reddit (r/thedivision)
-</a>
+
     <script>
-        fetch('./status.json?t=' + new Date().getTime())
-    .then(r => r.json())
-    .then(data => {
-            document.getElementById('maint-title').innerText = data.title;
-            document.getElementById('maint-link').innerHTML = `<a href="${data.url}" style="color: #ffd700">View Source Post</a>`;
-        });
+        fetch('./status.json?t=' + Date.now())
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('title').innerText = data.title;
+                
+                if(data.utc_start) {
+                    const start = new Date(data.utc_start);
+                    // This automatically converts to Australia/Sydney time
+                    const options = { 
+                        timeZone: 'Australia/Sydney',
+                        weekday: 'long', 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        day: 'numeric',
+                        month: 'short'
+                    };
+                    document.getElementById('local-time').innerText = "NSW: " + start.toLocaleString('en-AU', options);
+                }
+                
+                document.getElementById('link').innerHTML = `<a href="${data.url}" target="_blank" style="color: #ff6600;">Source Intel</a>`;
+            });
     </script>
+    <a href="https://www.reddit.com/r/thedivision/new/" class="footer-link">Manual Agent Backup (Reddit)</a>
 </body>
 </html>
